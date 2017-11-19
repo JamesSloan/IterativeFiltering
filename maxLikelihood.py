@@ -21,10 +21,10 @@ def getWeights(numSensors, sensorVar, numColluders):
 def getEstimates(weights, readings):
 	numReadings = len(readings[0])
 	estimates = []
-	for i in range(0,numReadings):
+	for t in range(0,numReadings):
 		total = 0
-		for j in range(0,numSensors):
-			total += weights[j]*readings[j][i]
+		for i in range(0,numSensors):
+			total += weights[i]*readings[i][t]
 		estimates.append(total)
 
 	return estimates
@@ -42,8 +42,8 @@ def errorBest(noise, excluding=0): #excluding = 5
 	errorBest = 9999
 	for i in range(0,len(noise)):
 		square = 0
-		for i in range(0,len(noise[0])):
-			square += noise[i]**2
+		for t in range(0,len(noise[0])):
+			square += noise[t]**2
 		RMS = np.sqrt(square/len(noise))
 		if RMS < errorBest : errorBest = RMS
 

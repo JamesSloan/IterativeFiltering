@@ -19,14 +19,17 @@ def getRealTemp(numReadings):
 
     return tempReal
 
-def getSensorVar(numSensors):
+def getSensorVar(numSensors, attackMode):
     sensorVar = []
     for i in range(0,numSensors):
-        if (i < numSensors-1):
-            sensorVar.append(np.random.rand()*15) 
-            #original code was (1-15), not (0-15)
-        else: 
-            sensorVar.append(0.01)
+        if attackMode == 0:
+            sensorVar.append(np.random.rand()*15)
+        else:
+            if (i < numSensors-1):
+                sensorVar.append(np.random.rand()*15) 
+                #original code was (1-15), not (0-15)
+            else: 
+                sensorVar.append(0.01)
 
     return sensorVar
 
@@ -39,17 +42,17 @@ def getSensorNoise(numSensors,numReadings,var):
 
 def getUnsophisticatedMean(sensorReadings):
     meanReadings = []
-    for i in range(0,len(sensorReadings[0])): # for every reading
+    for t in range(0,len(sensorReadings[0])): # for every reading
         total = 0
-        for j in range(0,len(sensorReadings)-1): # don't include sophisticated sensor
-            total += sensorReadings[j][i]
+        for i in range(0,len(sensorReadings)-1): # don't include sophisticated sensor
+            total += sensorReadings[i][t]
         meanReadings.append(total/(len(sensorReadings)-1))
 
     return meanReadings
 
 def getSensorReadings(numSensors,numReadings,numColluders, colDiff, attackMode):
     realTemp = getRealTemp(numReadings)
-    var = getSensorVar(numSensors)
+    var = getSensorVar(numSensors,attackMode)
     noise = getSensorNoise(numSensors,numReadings,var)
 
     #use maxLikelihoodEstimator here?
@@ -57,11 +60,11 @@ def getSensorReadings(numSensors,numReadings,numColluders, colDiff, attackMode):
     sensorReadings = []
     for i in range(0,numSensors):
         temp = []
-        for j in range(0,numReadings):
+        for t in range(0,numReadings):
             if (i <= numSensors - numColluders):
-                temp.append(realTemp[j] + noise[i][j])
+                temp.append(realTemp[t] + noise[i][t])
             else:
-                temp.append(realTemp[j] + noise[i][j] + colDiff)
+                temp.append(realTemp[t] + noise[i][t] + colDiff)
         sensorReadings.append(temp)
 
     if attackMode == 1:
@@ -71,6 +74,7 @@ def getSensorReadings(numSensors,numReadings,numColluders, colDiff, attackMode):
         # does adding noise change this?
         meanReadings = getUnsophisticatedMean(sensorReadings)
         sensorReadings[numSensors-1] = meanReadings
+
     return sensorReadings
 
 
@@ -109,7 +113,7 @@ if __name__ == "__main__":
 
     numSensors = 25   #NN
     numReadings = 288 #TT
-    attackMode = 0    #sophisticated
+    attackMode = 1    #sophisticated
     numColluders = 5  #COL
     colDiff = 100     #M   how much higher than real
     plotOn = True
@@ -118,19 +122,27 @@ if __name__ == "__main__":
     realTemp = getRealTemp(numReadings)
 
     total_IF_error = 0
+    total_IF_A_error = 0
     print("Running %d iterations" % iterations)
     for i in range(0,iterations):
         if (iterations > 20) & (i % (iterations/10) == 0) : print("iteration %d" % i)
         readings = getSensorReadings(numSensors,numReadings,numColluders, 
             colDiff, attackMode)
         IF_weights, IF_counter, IF_estimate, IF_error = IF.IF_algo(readings,realTemp)
+        IF_A_weights, IF_A_counter, IF_A_estimate, IF_A_error = IF.IF_Affine_algo(readings,realTemp)
+
         total_IF_error += IF_error
+        total_IF_A_error += IF_A_error
+
     avg_IF_error = total_IF_error/iterations
+    avg_IF_A_error = total_IF_A_error/iterations
 
 
     resultsTable = []
     resultsTable.append('IF_error: %f' % IF_error)
     resultsTable.append('avg_IF_error: %f' % avg_IF_error)
+    resultsTable.append('IF_Affine_error: %f' % IF_A_error)
+    resultsTable.append('avg_IF_Affine_error: %f' % avg_IF_A_error)
     for line in resultsTable:
         print(line) 
 
@@ -145,6 +157,7 @@ if __name__ == "__main__":
         if attackMode == 1 :
             plotData.append([readings[numSensors-1], "collaborator (sophisticated)"])
         plotData.append([IF_estimate, "IF_estimate"])
+        plotData.append([IF_A_estimate, "IF_Affine_estimate"])
         plotMultipleSimple(plotData)
         plt.show(); #comment out when reading figures seperately
 

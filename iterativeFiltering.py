@@ -13,8 +13,11 @@ def IF_algo(readings,realValues):
 	diff = 1000 # starting value for RMS diff between two consecutive iterations
 	accuracy = 10**(-8) #threshold when to stop iterating
 
+	print("IF:")
 	while (diff > accuracy):
 		oldEstimate = estimate
+		print(realValues[0],estimate[0])
+
 		# estimation of variances
 		var = IF_getVar(readings,estimate)
 		#print(counter, var[0], diff)
@@ -28,11 +31,11 @@ def IF_algo(readings,realValues):
 
 def initialEstimate(readings):
 	estimate = []
-	for i in range(0,len(readings[0])):
+	for t in range(0,len(readings[0])):
 		total = 0
-		for j in range(0,len(readings)):
-			total += readings[j][i]
-		estimate.append(total)
+		for i in range(0,len(readings)):
+			total += readings[i][t]
+		estimate.append(total/len(readings))
 
 	return estimate
 
@@ -41,8 +44,8 @@ def IF_getVar(readings,estimate):
 	var = []
 	for i in range(0,len(readings)):
 		total = 0
-		for j in range(0,len(readings[0])):
-			total += (readings[i][j] - estimate[j])**2
+		for t in range(0,len(readings[0])):
+			total += (readings[i][t] - estimate[t])**2
 		var.append(total/(len(readings[0])-1))
 
 	return var
@@ -60,35 +63,37 @@ def IF_getWeights(var):
 
 def IF_getEstimate(weights, readings):
 	estimate = []
-	for i in range(0,len(readings[0])):
+	for t in range(0,len(readings[0])):
 		total = 0
-		for j in range(0,len(readings)):
-			total += weights[j]*readings[j][i]
+		for i in range(0,len(readings)):
+			total += weights[i]*readings[i][t]
 		estimate.append(total)
 
 	return estimate
 
+# same as IF_algo, but getDist (not getVar) and getWeights are different
 def IF_Affine_algo(readings,realValues):
 	# Initial estimate
 	estimate = initialEstimate(readings)
+	#print(estimate)
 
 	counter = 0 # counter for number of iterations
 	diff = 1000 # starting value for RMS diff between two consecutive iterations
 	accuracy = 10**(-8) #threshold when to stop iterating
-
+	print("IF_Affine:")
 	while (diff > accuracy):
 		oldEstimate = estimate
+		print(realValues[0],estimate[0])
 
 		# distance of estimate from readings
 		dist = IF_Affine_getDist(readings, estimate)
-
-
-
-		# estimation of variances
-		var = IF_getVar(readings,estimate)
-		weights = IF_getWeights(var)
-		estimate = IF_getEstimate(weights, readings)
+		# weights obtained via affine penalty function
+		weights = IF_Affine_getWeights(dist)
+		# update estimate (same function as IF)
+		estimate = IF_getEstimate(weights,readings)
+		# calculate difference between old and current estimate
 		diff = maxL.RMSE(estimate, oldEstimate)
+
 		counter += 1
 
 	error = maxL.RMSE(realValues,estimate)	
@@ -103,3 +108,16 @@ def IF_Affine_getDist(readings,estimate):
 		dist.append(np.sqrt(squareTotal))
 
 	return dist
+
+def IF_Affine_getWeights(dist):
+	weights = []
+	maxDist = np.amax(dist)
+	for i in range(0,len(dist)):
+		weights.append(maxDist - dist[i])
+
+	total = np.sum(weights)
+	for i in range(0,len(weights)):
+		weights[i] = weights[i]/total
+
+	return weights
+
