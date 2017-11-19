@@ -5,6 +5,8 @@ import numpy as np
 import maxLikelihood as maxL
 
 # realValues only passed in to keep analytics together
+# for attackMode == 1, var[sophisticated] ~= 0,
+#  so weight[sophisticated] ~= 1, which puts off the algorithm
 def IF_algo(readings,realValues):
 	# Initial estimate
 	estimate = initialEstimate(readings)
@@ -13,14 +15,12 @@ def IF_algo(readings,realValues):
 	diff = 1000 # starting value for RMS diff between two consecutive iterations
 	accuracy = 10**(-8) #threshold when to stop iterating
 
-	print("IF:")
+	#print("IF:")
 	while (diff > accuracy):
 		oldEstimate = estimate
-		print(realValues[0],estimate[0])
 
 		# estimation of variances
 		var = IF_getVar(readings,estimate)
-		#print(counter, var[0], diff)
 		weights = IF_getWeights(var)
 		estimate = IF_getEstimate(weights, readings)
 		diff = maxL.RMSE(estimate, oldEstimate)
@@ -72,6 +72,10 @@ def IF_getEstimate(weights, readings):
 	return estimate
 
 # same as IF_algo, but getDist (not getVar) and getWeights are different
+# Affine penalty function in weights means the small diff[sophisticated] doesn't 
+#  overpower the estimate. Just pushes the avg higher by about avg(soph)/numSensors
+#
+#  i.e estimate values the soph collaborator sensor the same as other non collaborators sensors
 def IF_Affine_algo(readings,realValues):
 	# Initial estimate
 	estimate = initialEstimate(readings)
@@ -80,10 +84,9 @@ def IF_Affine_algo(readings,realValues):
 	counter = 0 # counter for number of iterations
 	diff = 1000 # starting value for RMS diff between two consecutive iterations
 	accuracy = 10**(-8) #threshold when to stop iterating
-	print("IF_Affine:")
+	#print("IF_Affine:")
 	while (diff > accuracy):
 		oldEstimate = estimate
-		print(realValues[0],estimate[0])
 
 		# distance of estimate from readings
 		dist = IF_Affine_getDist(readings, estimate)

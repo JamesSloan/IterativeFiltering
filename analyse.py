@@ -222,7 +222,7 @@ if __name__ == "__main__":
         IF_time.append(temp_IF_time)
         IF_A_time.append(temp_IF_A_time)
 
-    unSo_IF_error = tableEntryFormat('IF_error:',F_error[0])
+    unSo_IF_error = tableEntryFormat('IF_error:',IF_error[0])
     """
     temp = []
     temp.append('IF_error:')
@@ -231,11 +231,7 @@ if __name__ == "__main__":
     unSo_IF_error = temp
     """
 
-    temp = []
-    temp.append('IF_error:')
-    for i in range(0,len(IF_error[1])):
-        temp.append(IF_error[1][i])
-    so_IF_error = temp
+    so_IF_error = tableEntryFormat('IF_error:',IF_error[1])
 
     temp = []
     temp.append('IF_A_error:')
