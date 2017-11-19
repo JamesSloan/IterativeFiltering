@@ -52,6 +52,7 @@ def IF_getVar(readings,estimate):
 
 def IF_getWeights(var):
 	weights = []
+	print(var)
 	for i in range(0,len(var)):
 		den = 0
 		for j in range(0,len(var)):

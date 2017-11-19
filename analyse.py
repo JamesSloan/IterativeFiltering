@@ -113,7 +113,7 @@ def tableEntryFormat(name,array):
     temp = []
     temp.append(name)
     for i in range(0,len(array)):
-        temp.append(IF_error[i])
+        temp.append(array[i])
 
     return temp
 
@@ -152,124 +152,37 @@ def runAlgorithms(numSensors,numReadings,numColluders,colDiff,attackMode):
 
     return results
 
-if __name__ == "__main__":
-    print("Starting Analysis")
-
-    sensorOptions = [10,20,25,50,75,100] #,200,400,800]
-    colPercentOptions = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-    colDiffOptions = [5,10,20,40,80,100,200,400,800]
-    readingsOptions = [5,10,20,40,80,100,200,400,800]
-    attackModeOptions = [0,1]
-
-    default_numSensors = 25                #NN 
-    default_numReadings = 288              #TT
-    default_numColluders = 5               #COL 
-    default_colDiff = 100                  #M:  how much higher than real
-    default_attackMode = 1                 #sophisticated
-    
-    plotOn = False
-    global iterations
-    iterations = 1
-
-
-    total_IF_error = 0
-    total_IF_A_error = 0
-    IF_times = []
-    IF_A_times = []
-    print("Running %d iterations\n" % iterations)
-
-    # Varying numSensors
-    varySensorResults = []
-    for attackMode in attackModeOptions:
-        temp = []
-        for s in sensorOptions:
-            print(s)
-            numSensors = s
-            numReadings = default_numReadings
-            numColluders = default_numColluders
-            colDiff = default_colDiff
-            temp.append(runAlgorithms(
-                numSensors,numReadings,numColluders,colDiff,attackMode))
-        varySensorResults.append(temp)
-
-    #avg_soph = np.sum(readings[numSensors-1])/numReadings
-    #print("SophMean: %f" % (avg_soph/numSensors))
-
-    print(len(varySensorResults))
-    print(len(varySensorResults[0]))
-    print(len(varySensorResults[0][0]))
-    print(len(varySensorResults[0][0][0]))
-
-    # Results table
+def writeResultsTable(name, numAttackModes,numSensorOps,results):
     resultsTable_unSo = []
     resultsTable_so = []
     IF_error = [] 
     IF_A_error = []
     IF_time = []
     IF_A_time = []
-    for a in attackModeOptions:
+    for a in range(0,numAttackModes):
         temp_IF_error = [] 
         temp_IF_A_error = []
         temp_IF_time = []
         temp_IF_A_time = []
-        for s in range(0,len(sensorOptions)):
-            temp_IF_error.append(varySensorResults[a][s][0][0])
-            temp_IF_A_error.append(varySensorResults[a][s][1][0])
-            temp_IF_time.append(varySensorResults[a][s][0][1])
-            temp_IF_A_time.append(varySensorResults[a][s][1][1])
+        for s in range(0,numSensorOps):
+            temp_IF_error.append(results[a][s][0][0])
+            temp_IF_A_error.append(results[a][s][1][0])
+            temp_IF_time.append(results[a][s][0][1])
+            temp_IF_A_time.append(results[a][s][1][1])
         IF_error.append(temp_IF_error) 
         IF_A_error.append(temp_IF_A_error)
         IF_time.append(temp_IF_time)
         IF_A_time.append(temp_IF_A_time)
 
     unSo_IF_error = tableEntryFormat('IF_error:',IF_error[0])
-    """
-    temp = []
-    temp.append('IF_error:')
-    for i in range(0,len(IF_error[0])):
-        temp.append(IF_error[0][i])
-    unSo_IF_error = temp
-    """
-
     so_IF_error = tableEntryFormat('IF_error:',IF_error[1])
+    unSo_IF_A_error = tableEntryFormat('IF_A_error:',IF_A_error[0])
+    so_IF_A_error = tableEntryFormat('IF_A_error:',IF_A_error[1])
+    unSo_IF_time = tableEntryFormat('IF_time',IF_time[0])
+    so_IF_time = tableEntryFormat('IF_time',IF_time[1])
+    unSo_IF_A_time = tableEntryFormat('IF_A_time:',IF_A_time[0])
+    so_IF_A_time = tableEntryFormat('IF_A_time:',IF_A_time[1])
 
-    temp = []
-    temp.append('IF_A_error:')
-    for i in range(0,len(IF_A_error[0])):
-        temp.append(IF_A_error[0][i])
-    unSo_IF_A_error = temp
-
-    temp = []
-    temp.append('IF_A_error:')
-    for i in range(0,len(IF_A_error[1])):
-        temp.append(IF_A_error[1][i])
-    so_IF_A_error = temp
-
-    temp = []
-    temp.append('avg_IF_time:')
-    for i in range(0,len(IF_time[0])):
-        temp.append(IF_time[0][i])
-    unSo_IF_time = temp
-
-    temp = []
-    temp.append('avg_IF_time:')
-    for i in range(0,len(IF_time[1])):
-        temp.append(IF_time[1][i])
-    so_IF_time = temp
-
-    temp = []
-    temp.append('avg_IF_A_time:')
-    for i in range(0,len(IF_A_time[0])):
-        temp.append(IF_A_time[0][i])
-    unSo_IF_A_time = temp
-
-    temp = []
-    temp.append('avg_IF_A_time:')
-    for i in range(0,len(IF_A_time[1])):
-        temp.append(IF_A_time[1][i])
-    so_IF_A_time = temp
-
-    
     # unsophisticated attack
     resultsTable_unSo.append(unSo_IF_error)
     resultsTable_unSo.append(unSo_IF_A_error)  
@@ -284,21 +197,92 @@ if __name__ == "__main__":
     table_Unso = tabulate.tabulate(resultsTable_unSo, 
         sensorOptions, tablefmt="simple", floatfmt=".4f")
     table_so = tabulate.tabulate(resultsTable_so, 
-        sensorOptions, tablefmt="simple", floatfmt=".4f")  
+        sensorOptions, tablefmt="simple", floatfmt=".4f") 
+
+    #print table 
     print("Unsophisticated attack")
     print(table_Unso)
     print("Sophisticated attack")
     print(table_so)
     # write table to file
-    f = open('results_table.txt', 'w')
-    f.write("Varying number of Sensors")
+    f = open('results_%s.txt' % name, 'w')
+    f.write("Varying number of %s" % name)
     f.write("\n\nUnsophisticated attack\n")
     f.write(table_Unso)
     f.write("\n\nSophisticated attack\n")
     f.write(table_so)
     f.close()
 
+def varySensors(sensorOptions):
+    global default_numReadings, default_numColluders, \
+        default_colDiff, attackModeOptions
+
+    results = []
+    for attackMode in attackModeOptions:
+        temp = []
+        for numSensors in sensorOptions:
+            temp.append(runAlgorithms(numSensors, default_numReadings,
+                default_numColluders, default_colDiff, attackMode))
+        results.append(temp)
+
+    return results
+
+def varyReadings(readingsOptions):
+    global default_numSensors, default_numColluders, \
+        default_colDiff, attackModeOptions
+
+    results = []
+    for attackMode in attackModeOptions:
+        temp = []
+        for numReadings in readingsOptions:
+            temp.append(runAlgorithms(default_numSensors, numReadings,
+                default_numColluders, default_colDiff, attackMode))
+        results.append(temp)
+
+    return results
+
+
+if __name__ == "__main__":
+    print("Starting Analysis")
+
+    global iterations, default_numSensors, default_numReadings, default_numColluders,\
+        default_colDiff, attackModeOptions
+
+    default_numSensors = 25                #NN 
+    default_numReadings = 288              #TT
+    default_numColluders = 5               #COL 
+    default_colDiff = 100                  #M:  how much higher than real
+    default_attackMode = 1                 #sophisticated
+
+    sensorOptions = [10,20,25,50,75,100] #,200,400,800]
+    colPercentOptions = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+    colDiffOptions = [5,10,20,40,80,100,200,400,800]
+    readingsOptions = [5,10,20,40,80,100,200,400,800]
+    attackModeOptions = [0,1]
     
+    plotOn = False
+    iterations = 1
+
+
+    total_IF_error = 0
+    total_IF_A_error = 0
+    IF_times = []
+    IF_A_times = []
+    print("Using %d iterations\n" % iterations)
+
+    """
+    # Varying numSensors
+    results = varySensors(sensorOptions)
+    # Results table
+    writeResultsTable(
+        "Sensors",len(attackModeOptions),len(sensorOptions),results)
+"""
+    # Varying numReadings
+    results = varyReadings(readingsOptions)
+    # Results table
+    writeResultsTable(
+        "Readings",len(attackModeOptions),len(sensorOptions),results)
+
     realTemp = getRealTemp(default_numReadings)
 
     # Plotting
